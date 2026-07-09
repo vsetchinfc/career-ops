@@ -4972,7 +4972,10 @@ try {
 
 console.log('\n14. Batch spend_tier model routing');
 
-try {
+// Helper: create a fully isolated tmp fixture for one spend_tier sub-test.
+// Each sub-test gets its own mkdtempSync so no batch-state.tsv from a prior
+// sub-test can bleed in, regardless of OS-level I/O ordering on CI runners.
+function makeTierFixture(profileYml) {
   const tmp = mkdtempSync(join(tmpdir(), 'co-batch-tier-'));
   const batchDir = join(tmp, 'batch');
   const fakeBin = join(tmp, 'bin');
@@ -4996,7 +4999,7 @@ try {
     'id\turl\tsource\tnotes',
     '1\thttps://example.com/one\tfixture\t-',
   ].join('\n') + '\n');
-  writeFileSync(join(configDir, 'profile.yml'), 'spend_tier: economy\n');
+  writeFileSync(join(configDir, 'profile.yml'), profileYml);
   writeFileSync(join(fakeBin, 'claude'), [
     '#!/usr/bin/env bash',
     'printf "%s\\n" "$@" > "$BATCH_ARG_FILE"',
@@ -5007,94 +5010,83 @@ try {
   } else {
     execFileSync('chmod', ['+x', join(fakeBin, 'claude')]);
   }
+  return { tmp, batchDir, fakeBin };
+}
 
+// economy tier
+try {
+  const { tmp, batchDir, fakeBin } = makeTierFixture('spend_tier: economy\n');
   const argFile = join(tmp, 'claude-argv.txt');
-  const env = {
-    ...process.env,
-    PATH: `${fakeBin}${delimiter}${process.env.PATH}`,
-    BATCH_ARG_FILE: argFile,
-  };
-  const out = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], {
-    cwd: tmp,
-    env,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }) || '';
+  const env = { ...process.env, PATH: `${fakeBin}${delimiter}${process.env.PATH}`, BATCH_ARG_FILE: argFile };
+  const out = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], { cwd: tmp, env, stdio: ['pipe', 'pipe', 'pipe'] }) || '';
   const argv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
-
   if (argv.includes('--model') && argv.includes('claude-haiku-4-5') && out.includes('spend_tier=economy')) {
     pass('economy spend_tier resolves to claude-haiku-4-5');
   } else {
     fail(`economy spend_tier did not route to haiku: argv=${JSON.stringify(argv)}, out=${JSON.stringify(out.slice(-240))}`);
   }
+  try { rmSync(tmp, { recursive: true, force: true }); } catch {}
+} catch (e) { fail(`Batch spend_tier routing test crashed (economy): ${e.message}`); }
 
-  writeFileSync(join(configDir, 'profile.yml'), 'spend_tier: premium\n');
-  rmSync(argFile, { force: true });
-  rmSync(join(batchDir, 'batch-state.tsv'), { force: true });
-  const premiumOut = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], {
-    cwd: tmp,
-    env,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }) || '';
+// premium tier
+try {
+  const { tmp, batchDir, fakeBin } = makeTierFixture('spend_tier: premium\n');
+  const argFile = join(tmp, 'claude-argv.txt');
+  const env = { ...process.env, PATH: `${fakeBin}${delimiter}${process.env.PATH}`, BATCH_ARG_FILE: argFile };
+  const premiumOut = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], { cwd: tmp, env, stdio: ['pipe', 'pipe', 'pipe'] }) || '';
   const premiumArgv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
-
   if (premiumArgv.includes('--model') && premiumArgv.includes('claude-opus-4-8') && premiumOut.includes('spend_tier=premium')) {
     pass('premium spend_tier resolves to claude-opus-4-8');
   } else {
     fail(`premium spend_tier did not route to opus: argv=${JSON.stringify(premiumArgv)}, out=${JSON.stringify(premiumOut.slice(-240))}`);
   }
+  try { rmSync(tmp, { recursive: true, force: true }); } catch {}
+} catch (e) { fail(`Batch spend_tier routing test crashed (premium): ${e.message}`); }
 
-  rmSync(argFile, { force: true });
-  rmSync(join(batchDir, 'batch-state.tsv'), { force: true });
-  const overrideOut = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1', '--model', 'claude-sonnet-4-6'], {
-    cwd: tmp,
-    env,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }) || '';
+// --model override takes precedence over spend_tier
+try {
+  const { tmp, batchDir, fakeBin } = makeTierFixture('spend_tier: premium\n');
+  const argFile = join(tmp, 'claude-argv.txt');
+  const env = { ...process.env, PATH: `${fakeBin}${delimiter}${process.env.PATH}`, BATCH_ARG_FILE: argFile };
+  const overrideOut = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1', '--model', 'claude-sonnet-4-6'], { cwd: tmp, env, stdio: ['pipe', 'pipe', 'pipe'] }) || '';
   const overrideArgv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
-
   if (overrideArgv.includes('--model') && overrideArgv.includes('claude-sonnet-4-6') && !overrideArgv.includes('claude-opus-4-8') && overrideOut.includes('explicit --model override')) {
     pass('--model override takes precedence over spend_tier');
   } else {
     fail(`--model override did not win: argv=${JSON.stringify(overrideArgv)}, out=${JSON.stringify(overrideOut.slice(-240))}`);
   }
+  try { rmSync(tmp, { recursive: true, force: true }); } catch {}
+} catch (e) { fail(`Batch spend_tier routing test crashed (--model override): ${e.message}`); }
 
-  // standard tier: missing config key defaults to standard
-  // Reset state so the offer is pending again for this sub-test.
-  rmSync(join(batchDir, 'batch-state.tsv'), { force: true });
-  writeFileSync(join(configDir, 'profile.yml'), '# no spend_tier key\nname: test\n');
-  rmSync(argFile, { force: true });
-  const standardDefaultOut = run('bash', [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], {
-    cwd: tmp,
-    env,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }) || '';
+// missing spend_tier key defaults to standard
+try {
+  const { tmp, batchDir, fakeBin } = makeTierFixture('# no spend_tier key\nname: test\n');
+  const argFile = join(tmp, 'claude-argv.txt');
+  const env = { ...process.env, PATH: `${fakeBin}${delimiter}${process.env.PATH}`, BATCH_ARG_FILE: argFile };
+  const standardDefaultOut = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], { cwd: tmp, env, stdio: ['pipe', 'pipe', 'pipe'] }) || '';
   const standardDefaultArgv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
   if (standardDefaultOut.includes('spend_tier=standard') && (standardDefaultArgv.includes('claude-sonnet-4-6') || standardDefaultOut.includes('claude-sonnet-4-6'))) {
     pass('missing spend_tier key defaults to standard tier (claude-sonnet-4-6)');
   } else {
     fail(`missing spend_tier did not default to standard: argv=${JSON.stringify(standardDefaultArgv)}, out=${JSON.stringify(standardDefaultOut.slice(-240))}`);
   }
+  try { rmSync(tmp, { recursive: true, force: true }); } catch {}
+} catch (e) { fail(`Batch spend_tier routing test crashed (missing key): ${e.message}`); }
 
-  // standard tier: invalid config value falls back to standard with a warning
-  rmSync(join(batchDir, 'batch-state.tsv'), { force: true });
-  writeFileSync(join(configDir, 'profile.yml'), 'spend_tier: turbo\n');
-  rmSync(argFile, { force: true });
-  const invalidTierOut = run('bash', [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], {
-    cwd: tmp,
-    env,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  }) || '';
+// invalid spend_tier value falls back to standard with a warning
+try {
+  const { tmp, batchDir, fakeBin } = makeTierFixture('spend_tier: turbo\n');
+  const argFile = join(tmp, 'claude-argv.txt');
+  const env = { ...process.env, PATH: `${fakeBin}${delimiter}${process.env.PATH}`, BATCH_ARG_FILE: argFile };
+  const invalidTierOut = run(getBash(), [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], { cwd: tmp, env, stdio: ['pipe', 'pipe', 'pipe'] }) || '';
   const invalidTierArgv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
   if (invalidTierOut.includes('spend_tier=standard') && (invalidTierArgv.includes('claude-sonnet-4-6') || invalidTierOut.includes('claude-sonnet-4-6'))) {
     pass('invalid spend_tier value falls back to standard tier (claude-sonnet-4-6)');
   } else {
     fail(`invalid spend_tier did not fall back to standard: argv=${JSON.stringify(invalidTierArgv)}, out=${JSON.stringify(invalidTierOut.slice(-240))}`);
   }
-
   try { rmSync(tmp, { recursive: true, force: true }); } catch {}
-} catch (e) {
-  fail(`Batch spend_tier routing test crashed: ${e.message}`);
-}
+} catch (e) { fail(`Batch spend_tier routing test crashed (invalid value): ${e.message}`); }
 
 // ── 14b. BATCH PRE-SCREEN DISCARD LOG ────────────────────────────
 
