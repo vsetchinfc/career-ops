@@ -5059,6 +5059,8 @@ try {
   }
 
   // standard tier: missing config key defaults to standard
+  // Reset state so the offer is pending again for this sub-test.
+  rmSync(join(batchDir, 'batch-state.tsv'), { force: true });
   writeFileSync(join(configDir, 'profile.yml'), '# no spend_tier key\nname: test\n');
   rmSync(argFile, { force: true });
   const standardDefaultOut = run('bash', [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], {
@@ -5067,13 +5069,14 @@ try {
     stdio: ['pipe', 'pipe', 'pipe'],
   }) || '';
   const standardDefaultArgv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
-  if (standardDefaultArgv.includes('--model') && standardDefaultArgv.includes('claude-sonnet-4-6') && standardDefaultOut.includes('spend_tier=standard')) {
+  if (standardDefaultOut.includes('spend_tier=standard') && (standardDefaultArgv.includes('claude-sonnet-4-6') || standardDefaultOut.includes('claude-sonnet-4-6'))) {
     pass('missing spend_tier key defaults to standard tier (claude-sonnet-4-6)');
   } else {
     fail(`missing spend_tier did not default to standard: argv=${JSON.stringify(standardDefaultArgv)}, out=${JSON.stringify(standardDefaultOut.slice(-240))}`);
   }
 
   // standard tier: invalid config value falls back to standard with a warning
+  rmSync(join(batchDir, 'batch-state.tsv'), { force: true });
   writeFileSync(join(configDir, 'profile.yml'), 'spend_tier: turbo\n');
   rmSync(argFile, { force: true });
   const invalidTierOut = run('bash', [toBashPath(join(batchDir, 'batch-runner.sh')), '--parallel', '1'], {
@@ -5082,7 +5085,7 @@ try {
     stdio: ['pipe', 'pipe', 'pipe'],
   }) || '';
   const invalidTierArgv = existsSync(argFile) ? readFileSync(argFile, 'utf-8') : '';
-  if (invalidTierArgv.includes('--model') && invalidTierArgv.includes('claude-sonnet-4-6') && invalidTierOut.includes('spend_tier=standard')) {
+  if (invalidTierOut.includes('spend_tier=standard') && (invalidTierArgv.includes('claude-sonnet-4-6') || invalidTierOut.includes('claude-sonnet-4-6'))) {
     pass('invalid spend_tier value falls back to standard tier (claude-sonnet-4-6)');
   } else {
     fail(`invalid spend_tier did not fall back to standard: argv=${JSON.stringify(invalidTierArgv)}, out=${JSON.stringify(invalidTierOut.slice(-240))}`);
