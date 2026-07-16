@@ -2,6 +2,9 @@
 // Moved verbatim from test-all.mjs (issue #1440); no framework by design:
 // the suite must run on a fresh clone with only Node.
 import { execSync, execFileSync } from 'child_process';
+// execSync is retained solely for getBash()'s WSL/bash probes below, which
+// invoke fixed literal strings (never caller-controlled input). run() itself
+// never uses execSync — see the CodeQL fix note on run() below.
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -71,23 +74,25 @@ export function finish() {
 }
 
 /**
- * Run a shell command or executable and return trimmed stdout on success.
+ * Run an executable with an explicit argument vector and return trimmed
+ * stdout on success.
  *
- * Array-form arguments use execFileSync to avoid shell parsing. String-only
- * commands use execSync for existing simple checks. Failures return null so the
- * caller can decide whether to count the result as a failure or warning.
+ * Always uses execFileSync — never a shell — so caller-controlled or
+ * environment-derived values in `args` can never be reinterpreted as shell
+ * metacharacters (CodeQL js/command-line-injection,
+ * js/shell-command-injection-from-environment). Callers that used to pass a
+ * single interpolated command string must pass `(cmd, [args...])` instead.
+ * Failures return null so the caller can decide whether to count the result
+ * as a failure or warning.
  *
- * @param {string} cmd - Command or executable to run.
- * @param {string[]} [args=[]] - Optional argument vector for execFileSync.
+ * @param {string} cmd - Executable to run.
+ * @param {string[]} [args=[]] - Argument vector for execFileSync.
  * @param {object} [opts={}] - Extra child_process options.
  * @returns {string|null} Trimmed stdout, or null when the command fails.
  */
 export function run(cmd, args = [], opts = {}) {
   try {
-    if (Array.isArray(args) && args.length > 0) {
-      return execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf-8', timeout: 30000, ...opts }).trim();
-    }
-    return execSync(cmd, { cwd: ROOT, encoding: 'utf-8', timeout: 30000, ...opts }).trim();
+    return execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf-8', timeout: 30000, ...opts }).trim();
   } catch (e) {
     return null;
   }
