@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} — CV</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  :root {
+    --navy-900: #0c1f35;
+    --navy-800: #123254;
+    --navy-700: #1b4170;
+    --navy-600: #1e5799;
+    --navy-500: #2563b0;
+    --navy-200: #bfd6ef;
+    --navy-100: #deeaf8;
+    --navy-50:  #f0f6fd;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --border: #d1dce8;
+    --rule: #e2eaf3;
+  }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: var(--text-primary);
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+  }
+
+  .page {
+    width: 100%;
+    max-width: {{PAGE_WIDTH}};
+    margin: 0 auto;
+    padding: 2px 0;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    border-top: 4px solid var(--navy-700);
+    padding-top: 18px;
+    margin-bottom: 18px;
+  }
+
+  .header h1 {
+    font-family: 'IBM Plex Sans', 'Inter', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--navy-900);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+
+  .header-rule {
+    height: 2px;
+    background: var(--navy-700);
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 0;
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .contact-row span,
+  .contact-row a {
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .contact-row a:hover {
+    color: var(--navy-600);
+  }
+
+  .contact-row .sep {
+    color: var(--border);
+    margin: 0 8px;
+    font-weight: 300;
+  }
+
+  /* ─── SECTIONS ─── */
+  .section {
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'IBM Plex Sans', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--navy-700);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    border-bottom: 1.5px solid var(--navy-700);
+    line-height: 1.2;
+  }
+
+  /* ─── PROFESSIONAL SUMMARY ─── */
+  .summary-text {
+    font-size: 10.5px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  /* ─── CORE COMPETENCIES ─── */
+  .competencies-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .competency-tag {
+    font-size: 9.5px;
+    font-weight: 500;
+    color: var(--navy-800);
+    background: var(--navy-50);
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--navy-200);
+    letter-spacing: 0.01em;
+  }
+
+  /* ─── WORK EXPERIENCE ─── */
+  .job {
+    margin-bottom: 13px;
+  }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 2px;
+  }
+
+  .job-company {
+    font-family: 'IBM Plex Sans', 'Inter', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--navy-800);
+    letter-spacing: 0.01em;
+  }
+
+  .job-period {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .job-role {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    font-style: italic;
+  }
+
+  .job-location {
+    font-size: 9.5px;
+    color: var(--text-light);
+  }
+
+  .job ul {
+    padding-left: 16px;
+    margin-top: 4px;
+    list-style-type: disc;
+  }
+
+  .job ul li {
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+  }
+
+  .job ul li::marker {
+    color: var(--navy-600);
+  }
+
+  .job ul li strong {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* ─── PROJECTS ─── */
+  .project {
+    margin-bottom: 11px;
+  }
+
+  .project-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .project-title {
+    font-family: 'IBM Plex Sans', 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--navy-800);
+  }
+
+  .project-badge {
+    font-size: 8.5px;
+    font-weight: 600;
+    color: var(--navy-700);
+    background: var(--navy-100);
+    border: 1px solid var(--navy-200);
+    padding: 1px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .project-desc {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .project-tech {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.55;
+  }
+
+  /* ─── EDUCATION ─── */
+  .edu-item {
+    margin-bottom: 7px;
+  }
+
+  .edu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .edu-title {
+    font-weight: 600;
+    font-size: 10.5px;
+    color: var(--text-primary);
+  }
+
+  .edu-org {
+    color: var(--navy-700);
+    font-weight: 500;
+  }
+
+  .edu-year {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .edu-desc {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+
+  /* ─── CERTIFICATIONS ─── */
+  .cert-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(80px, max-content) 44px;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 5px;
+  }
+
+  .cert-title {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 0;
+  }
+
+  .cert-org {
+    color: var(--navy-700);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .cert-year {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  /* ─── SKILLS ─── */
+  .skills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .skill-item {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .skill-category {
+    font-weight: 700;
+    color: var(--navy-800);
+    font-size: 10px;
+  }
+
+  /* ─── PRINT ─── */
+  @media print {
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .page {
+      padding: 0;
+    }
+  }
+
+  /* ─── PAGE BREAK CONTROL ─── */
+  .avoid-break,
+  .job,
+  .project,
+  .edu-item,
+  .cert-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ─── BACKWARD COMPAT — old generated HTML files ─── */
+  .header-gradient {
+    height: 2px;
+    background: var(--navy-700);
+    margin-bottom: 10px;
+    width: 60px;
+  }
+
+  .contact-row .separator {
+    color: var(--border);
+    margin: 0 8px;
+    font-weight: 300;
+  }
+
+  /* ─── LINKS ─── */
+  a {
+    white-space: nowrap;
+    color: var(--navy-600);
+    text-decoration: none;
+  }
+
+  /* ─── RTL (Arabic) ─── */
+  html[lang="ar"] body {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  }
+
+  html[lang="ar"] .header-rule {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  html[lang="ar"] .job ul {
+    padding-right: 14px;
+    padding-left: 0;
+  }
+
+  html[lang="ar"] .job ul {
+    padding-right: 16px;
+    padding-left: 0;
+    list-style-position: inside;
+  }
+
+  html[lang="ar"] .project-badge {
+    margin-right: 0;
+    margin-left: 6px;
+  }
+
+  html[lang="ar"] .cert-year {
+    text-align: left;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header avoid-break">
+    <h1>{{NAME}}</h1>
+    <div class="header-rule"></div>
+    <div class="contact-row">
+      <span>{{PHONE}}</span>
+      <span class="sep">|</span>
+      <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>
+      <span class="sep">|</span>
+      <a href="{{LINKEDIN_URL}}">{{LINKEDIN_DISPLAY}}</a>
+      <span class="sep">|</span>
+      <a href="{{PORTFOLIO_URL}}">{{PORTFOLIO_DISPLAY}}</a>
+      <span class="sep">|</span>
+      <span>{{LOCATION}}</span>
+    </div>
+  </div>
+
+  <!-- PROFESSIONAL SUMMARY -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_SUMMARY}}</div>
+    <div class="summary-text">{{SUMMARY_TEXT}}</div>
+  </div>
+
+  <!-- CORE COMPETENCIES -->
+  <div class="section">
+    <div class="section-title">{{SECTION_COMPETENCIES}}</div>
+    <div class="competencies-grid">
+      {{COMPETENCIES}}
+    </div>
+  </div>
+
+  <!-- WORK EXPERIENCE -->
+  <div class="section">
+    <div class="section-title">{{SECTION_EXPERIENCE}}</div>
+    {{EXPERIENCE}}
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_PROJECTS}}</div>
+    {{PROJECTS}}
+  </div>
+
+  <!-- EDUCATION -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_EDUCATION}}</div>
+    {{EDUCATION}}
+  </div>
+
+  <!-- CERTIFICATIONS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_CERTIFICATIONS}}</div>
+    {{CERTIFICATIONS}}
+  </div>
+
+  <!-- SKILLS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_SKILLS}}</div>
+    <div class="skills-grid">
+      {{SKILLS}}
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
